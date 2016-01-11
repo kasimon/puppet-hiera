@@ -25,9 +25,10 @@ This module configures [Hiera](https://github.com/puppetlabs/hiera) for Puppet.
 - /etc/hiera.yaml for symlink
 
 ### Setup requirements
-If you are using Puppet Enterprise and the eyaml backend, you will need the [puppetlabs-pe_gem](https://forge.puppetlabs.com/puppetlabs/pe_gem) module to install the eyaml gem using PE's gem command. If you are using a PE version with puppetserver (3.7 and later) you will also need the [puppetlabs-pe_puppetserver_gem](https://forge.puppetlabs.com/puppetlabs/pe_puppetserver_gem) module.
-
-Otherwise you just need puppet.
+If you are using the eyaml backend on:
+* Puppet Enterprise 3.3 or earlier then you will need the [puppetlabs-pe_gem](https://forge.puppetlabs.com/puppetlabs/pe_gem) module to install the eyaml gem using PE's gem command.
+* Puppet Enterprise 3.7 or 3.8 then you will need the [puppetlabs-pe_puppetserver_gem](https://forge.puppetlabs.com/puppetlabs/pe_puppetserver_gem) module.
+* Puppet Enterprise 2015.x or FOSS puppetserver then you will need the [puppetlabs-puppetserver_gem](https://forge.puppetlabs.com/puppetlabs/puppetserver_gem) module.
 
 ### Beginning with hiera
 
@@ -118,6 +119,7 @@ The following parameters are available for the hiera class:
   Default: `['yaml']`
 * `hiera_yaml`  
   The path to the hiera config file.  
+  **Note**: Due to a bug, hiera.yaml is not placed in the codedir.
   Default:
     * `'/etc/puppet/hiera.yaml'` for Puppet Open Source
     * `'/etc/puppetlabs/puppet/hiera.yaml'` for Puppet Enterprise
@@ -128,7 +130,8 @@ The following parameters are available for the hiera class:
   The path to the directory where hiera will look for databases.  
   Default:
     * `'/etc/puppet/hieradata'` for Puppet Open Source
-    * `'/etc/puppetlabs/puppet/hieradata'` for Puppet Enterprise
+    * `'/etc/puppetlabs/puppet/hieradata'` for PE Puppet < 4
+    * `'/etc/puppetlabs/code/environments/%{::environment}/hieradata'` for Puppet >= 4
 * `datadir_manage`  
   Whether to create and manage the datadir as a file resource.  
   Default: `true`
@@ -143,7 +146,7 @@ The following parameters are available for the hiera class:
     * `'puppet'` for Puppet Open Source
     * `'pe-puppet'` for Puppet Enterprise
 * `eyaml`  
-  Whether to install, configure, and enable [the eyaml backend][eyaml].  
+  Whether to install, configure, and enable [the eyaml backend][eyaml]. Also see the provider and masterservice parameters.  
   Default: `false`
 * `eyaml_datadir`  
   The path to the directory where hiera will look for databases with the eyaml backend.  
@@ -182,6 +185,14 @@ The following parameters are available for the hiera class:
   Arbitrary YAML content to append to the end of the hiera.yaml config file.  
   This is useful for configuring backend-specific parameters.  
   Default: `''`
+* `provider`  
+  Which provider to use to install hiera-eyaml. Can be `puppetserver_gem` (PE 2015.x), `pe_puppetserver_gem` (PE 3.7 and 3.8), `pe_gem` (PE pre-3.7), `puppet_gem` (FOSS using puppet's gem), or `gem` (FOSS using system's gem)
+  **Note**: hunner-hiera cannot detect FOSS puppetserver AIO and you must pass `provider => 'puppetserver_gem'` for that to work. See also masterservice.
+  Default: Depends on puppet version detected as specified above.
+* `masterservice`  
+  The service name of the master to restart after package installation or hiera.yaml changes.  
+  **Note**: You must pass `masterservice => 'puppetserver'` for FOSS puppetserver  
+  Default: 'pe-puppetserver' for PE 2015.x, otherwise 'puppetmaster'
 
 [eyaml]: https://github.com/TomPoulton/hiera-eyaml
 
